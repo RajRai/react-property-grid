@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
     CssBaseline, Container, Paper, ThemeProvider, createTheme,
-    Box, Typography, Stack, Button
+    Box, Typography, Stack, Button, TextField, Alert
 } from '@mui/material';
 import { PropertyGrid } from '@rajrai/react-property-grid'; // or your local alias
 
@@ -11,19 +11,16 @@ export default function App() {
         width: 1920,
         height: 1080,
         fullscreen: true,
-        quality: 1,                  // stored as numeric
+        quality: 1,
         tags: ['cinematic'],
-        camera: {
-            fovRange: [45, 90],        // valueRange example
-            lodRange: [0, 3],          // sliderRange example
-        },
-        render: { flags: { ambientOcclusion: true } }, // get/set mapping example
-        resolutionIndex: 2,          // 0/1/2 mapped to labels via render/parse
+        camera: { fovRange: [45, 90], lodRange: [0, 3] },
+        render: { flags: { ambientOcclusion: true } },
+        resolutionIndex: 2,
     });
-
     const [globalDisabled, setGlobalDisabled] = useState(false);
 
-    const schema = useMemo(() => ({
+    // --- Built-in example schema (JS object with functions)
+    const builtinSchema = useMemo(() => ({
         section: 'Scene',
         fields: {
             name: {
@@ -31,20 +28,15 @@ export default function App() {
                 label: 'Name',
                 validate: (v) => (!v ? 'Required' : null),
             },
-
-            // Example: store numeric, but show string labels in UI
             resolution: {
                 type: 'single-select',
                 label: 'Resolution',
                 options: ['720p', '1080p', '4K'],
                 get: (obj) => obj.resolutionIndex,
                 set: (obj, v) => { obj.resolutionIndex = v; },
-                // UI should show a string label, so map number <-> label
                 renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
                 parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
             },
-
-            // Classic numeric select (no transforms required)
             quality: {
                 type: 'single-select',
                 label: 'Quality',
@@ -55,30 +47,21 @@ export default function App() {
                 ],
                 validate: (v) => (v == null ? 'Choose a quality' : null),
             },
-
             fullscreen: { type: 'boolean', label: 'Fullscreen' },
         },
-
         children: [
             {
                 section: 'Dimensions',
                 fields: {
-                    width: {
-                        type: 'number', label: 'Width',
-                        validate: (v) => (v < 320 ? 'Too small' : null),
-                    },
-                    height: {
-                        type: 'number', label: 'Height',
-                        validate: (v) => (v < 200 ? 'Too small' : null),
-                    },
+                    width: { type: 'number', label: 'Width', validate: (v) => (v < 320 ? 'Too small' : null) },
+                    height:{ type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
                 },
             },
-
             {
                 section: 'Camera',
                 fields: {
                     fovRange: {
-                        type: 'valueRange',            // "range" also aliases to valueRange
+                        type: 'valueRange', // "range" also aliases to valueRange
                         label: 'FOV Range (deg)',
                         min: 1, max: 170,
                         get: (obj) => obj.camera.fovRange,
@@ -94,7 +77,6 @@ export default function App() {
                     },
                 },
             },
-
             {
                 section: 'Rendering',
                 fields: {
@@ -111,17 +93,130 @@ export default function App() {
                     },
                 },
             },
-
             {
                 section: 'Experimental',
                 collapsed: true,
-                disabled: true, // whole section disabled
+                disabled: true,
                 fields: {
                     debugFeature: { type: 'boolean', label: 'New Debug Toggle' },
                 },
             },
         ],
     }), []);
+
+    // --- Editable schema state (JS expression editor)
+    const initialEditor = useMemo(
+        // The editor expects a JS *expression* that evaluates to the schema object
+        () => `({
+  section: 'Scene',
+  fields: {
+    name: {
+      type: 'string',
+      label: 'Name',
+      validate: (v) => (!v ? 'Required' : null),
+    },
+    resolution: {
+      type: 'single-select',
+      label: 'Resolution',
+      options: ['720p', '1080p', '4K'],
+      get: (obj) => obj.resolutionIndex,
+      set: (obj, v) => { obj.resolutionIndex = v; },
+      renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
+      parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
+    },
+    quality: {
+      type: 'single-select',
+      label: 'Quality',
+      options: [
+        { value: 0, label: 'Low' },
+        { value: 1, label: 'Medium' },
+        { value: 2, label: 'High' },
+      ],
+      validate: (v) => (v == null ? 'Choose a quality' : null),
+    },
+    fullscreen: { type: 'boolean', label: 'Fullscreen' },
+  },
+  children: [
+    {
+      section: 'Dimensions',
+      fields: {
+        width: { type: 'number', label: 'Width', validate: (v) => (v < 320 ? 'Too small' : null) },
+        height:{ type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+      },
+    },
+    {
+      section: 'Camera',
+      fields: {
+        fovRange: {
+          type: 'valueRange',
+          label: 'FOV Range (deg)',
+          min: 1, max: 170,
+          get: (obj) => obj.camera.fovRange,
+          set: (obj, v) => { obj.camera.fovRange = v; },
+          validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
+        },
+        lodRange: {
+          type: 'sliderRange',
+          label: 'LOD Range',
+          min: 0, max: 5, step: 1,
+          get: (obj) => obj.camera.lodRange,
+          set: (obj, v) => { obj.camera.lodRange = v; },
+        },
+      },
+    },
+    {
+      section: 'Rendering',
+      fields: {
+        ambientOcclusion: {
+          type: 'boolean',
+          label: 'Ambient Occlusion',
+          get: (obj) => obj.render.flags.ambientOcclusion,
+          set: (obj, v) => { obj.render.flags.ambientOcclusion = v; },
+        },
+        tags: {
+          type: 'multi-select',
+          label: 'Tags',
+          options: ['cinematic', 'draft', 'final', 'internal'],
+        },
+      },
+    },
+    {
+      section: 'Experimental',
+      collapsed: true,
+      disabled: true,
+      fields: { debugFeature: { type: 'boolean', label: 'New Debug Toggle' } },
+    },
+  ],
+})`,
+        []
+    );
+
+    const [schemaEditor, setSchemaEditor] = useState(initialEditor);
+    const [schema, setSchema] = useState(builtinSchema);
+    const [schemaError, setSchemaError] = useState(null);
+
+    const applyEditedSchema = () => {
+        try {
+            // Evaluate the editor content as a *single JS expression* returning an object
+            // NOTE: Playground-only! Do not ship eval in your library.
+            // eslint-disable-next-line no-new-func
+            const fn = new Function(`return (${schemaEditor});`);
+            const obj = fn();
+            if (typeof obj !== 'object' || obj == null) {
+                throw new Error('Schema must evaluate to an object.');
+            }
+            setSchema(obj);
+            setSchemaError(null);
+        } catch (e) {
+            setSchemaError(e.message || String(e));
+        }
+    };
+
+    const resetSchema = () => {
+        setSchema(builtinSchema);
+        setSchemaEditor(initialEditor);
+        setSchemaError(null);
+    };
 
     const theme = useMemo(() => createTheme({
         palette: { mode: 'dark' },
@@ -131,30 +226,61 @@ export default function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Container maxWidth="md" sx={{ py: 4 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Container maxWidth="xl" sx={{ py: 2 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                     <Typography variant="h5">React Property Grid — Playground</Typography>
-                    <Button variant="outlined" onClick={() => setGlobalDisabled((d) => !d)}>
-                        {globalDisabled ? 'Enable Editing' : 'Disable All'}
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                        <Button variant="outlined" onClick={() => setGlobalDisabled((d) => !d)}>
+                            {globalDisabled ? 'Enable Editing' : 'Disable All'}
+                        </Button>
+                        <Button variant="outlined" onClick={resetSchema}>Reset Schema</Button>
+                        <Button variant="contained" onClick={applyEditedSchema}>Apply Schema</Button>
+                    </Stack>
                 </Stack>
 
-                <Paper variant="outlined">
-                    <PropertyGrid
-                        schema={schema}
-                        object={data}
-                        onChange={setData}
-                        disabled={globalDisabled}
-                        denseDivider
-                    />
-                </Paper>
-
-                <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>Current object</Typography>
-                    <Paper variant="outlined" sx={{ fontFamily: 'monospace', p: 2, fontSize: 12 }}>
-                        {JSON.stringify(data, null, 2)}
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    {/* Left: Schema Editor */}
+                    <Paper sx={{ flex: 1, minWidth: 300 }}>
+                        <Typography variant="subtitle2" gutterBottom>Schema (JS object expression)</Typography>
+                        <TextField
+                            multiline
+                            minRows={24}
+                            value={schemaEditor}
+                            onChange={(e) => setSchemaEditor(e.target.value)}
+                            fullWidth
+                            placeholder={`({ section: '...', fields: { ... } })`}
+                            InputProps={{
+                                sx: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, lineHeight: 1.4 }
+                            }}
+                        />
+                        {schemaError && (
+                            <Alert severity="error" sx={{ mt: 1 }}>
+                                {schemaError}
+                            </Alert>
+                        )}
+                        <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                            Tip: This editor accepts JavaScript (functions allowed). In real apps, avoid eval; this is playground-only.
+                        </Typography>
                     </Paper>
-                </Box>
+
+                    {/* Right: Property Grid + Data */}
+                    <Box sx={{ flex: 1.2, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 360 }}>
+                        <Paper variant="outlined">
+                            <PropertyGrid
+                                schema={schema}
+                                object={data}
+                                onChange={setData}
+                                disabled={globalDisabled}
+                                denseDivider
+                            />
+                        </Paper>
+
+                        <Paper variant="outlined" sx={{ fontFamily: 'monospace', p: 2, fontSize: 12 }}>
+                            <Typography variant="subtitle2" gutterBottom>Current object</Typography>
+                            <pre style={{ margin: 0 }}>{JSON.stringify(data, null, 2)}</pre>
+                        </Paper>
+                    </Box>
+                </Stack>
             </Container>
         </ThemeProvider>
     );
