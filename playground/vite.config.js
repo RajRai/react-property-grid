@@ -9,5 +9,9 @@ export default defineConfig({
     alias: {
       "@rajrai/react-property-grid": resolve(__dirname, "../src/index.js"),
     },
+  },
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
   }
 });

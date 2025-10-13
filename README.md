@@ -1,18 +1,17 @@
 # React Property Grid (MUI)
 
 Unreal-style, condensed property grid for React + MUI.
-- Hierarchical, collapsible sections
-- Types: string, number, boolean, single/multi-select, range
-- Per-field/section/global disabled
-- validate, transformIn/transformOut, or get/set bindings
 
-Install:
-```
+- Hierarchical, **collapsible** sections
+- Field types: `string`, `number`, `boolean`, `single-select`, `multi-select`, `valueRange`, `sliderRange`  
+  (`range` is an alias of `valueRange`)
+- Per-field / per-section / global **disabled**
+- Validation + value mapping with `renderValue` / `parseValue` (backwards-compatible with `transformIn` / `transformOut`)
+- Optional `get` / `set` for custom bindings
+
+**Demo:** [GitHub Pages](https://\<your-username\>.github.io/\<repo\>/)  
+**Playground source:** [`playground/`](./playground/)
+
+## Install
+```bash
 npm i @rajrai/react-property-grid
-```
-
-Usage:
-```
-import { PropertyGrid } from "@rajrai/react-property-grid";
-<PropertyGrid schema={schema} object={obj} onChange={setObj} />;
-```
