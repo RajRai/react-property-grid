@@ -23,16 +23,24 @@ const isOptionObject = (opt) => typeof opt === 'object' && opt !== null && 'valu
 const toOptionList = (options = []) =>
     options.map((o) => (isOptionObject(o) ? o : { value: o, label: String(o) }));
 
+// Back-compat: prefer renderValue/parseValue, fall back to transformIn/transformOut
+const getRenderFn = (field) => field.renderValue || field.transformIn;
+const getParseFn = (field) => field.parseValue || field.transformOut;
+
 const getFieldValue = (field, object, key) => {
     const raw = field.get ? field.get(object) : object?.[key];
-    return field.transformIn ? field.transformIn(raw, object) : raw;
+    const render = getRenderFn(field);
+    return render ? render(raw, object) : raw;
 };
+
 const setFieldValue = (field, object, key, uiValue) => {
-    const out = field.transformOut ? field.transformOut(uiValue, object) : uiValue;
+    const parse = getParseFn(field);
+    const out = parse ? parse(uiValue, object) : uiValue;
     if (field.set) field.set(object, out);
     else object[key] = out;
     return out;
 };
+
 const runValidate = (field, val, object) =>
     typeof field.validate === 'function' ? field.validate(val, object) || null : null;
 
@@ -63,8 +71,16 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
         </Typography>
     );
 
+    // Helpers for compact numeric inputs (allow empty string while editing)
+    const numberInputProps = { style: { fontSize: '0.8rem', padding: '2px 6px' } };
+    const toMaybeNumber = (v) => (v === '' ? '' : Number(v));
+
     const control = (() => {
-        switch (field.type) {
+        // NOTE: 'range' defaults to 'valueRange' (two text boxes)
+        let type = field.type;
+        if (type === 'range') type = 'valueRange';
+
+        switch (type) {
             case 'boolean':
                 return (
                     <FormControlLabel
@@ -88,33 +104,31 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                         size="small"
                         fullWidth
                         value={value ?? ''}
-                        onChange={(e) => {
-                            const v = e.target.value;
-                            // permit empty string for easy clearing; validate/commit number otherwise
-                            commit(v === '' ? '' : Number(v));
-                        }}
+                        onChange={(e) => commit(toMaybeNumber(e.target.value))}
                         disabled={disabled}
                         error={!!error}
                         helperText={error}
-                        inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
+                        inputProps={numberInputProps}
                     />
                 );
 
             case 'string':
-                return <TextField
-                    size="small"
-                    fullWidth
-                    value={value ?? ''}
-                    onChange={(e) => commit(e.target.value)}
-                    disabled={disabled}
-                    error={!!error}
-                    helperText={error}
-                    inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
-                />;
+                return (
+                    <TextField
+                        size="small"
+                        fullWidth
+                        value={value ?? ''}
+                        onChange={(e) => commit(e.target.value)}
+                        disabled={disabled}
+                        error={!!error}
+                        helperText={error}
+                        inputProps={numberInputProps}
+                    />
+                );
 
             case 'single-select':
             case 'multi-select': {
-                const multiple = field.type === 'multi-select';
+                const multiple = type === 'multi-select';
                 const opts = toOptionList(field.options || []);
                 const val = value ?? (multiple ? [] : '');
                 return (
@@ -135,10 +149,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                                     )
                                     : undefined
                             }
-                            sx={{
-                                fontSize: '0.8rem',
-                                '& .MuiSelect-select': { py: 0.5, px: 1 },
-                            }}
+                            sx={{ fontSize: '0.8rem', '& .MuiSelect-select': { py: 0.5, px: 1 } }}
                         >
                             {opts.map((opt) => (
                                 <MenuItem key={String(opt.value)} value={opt.value}>
@@ -151,18 +162,74 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                 );
             }
 
-            case 'range':
+            // Two compact inputs: [min, max]
+            case 'valueRange': {
+                const minDefault = field.min ?? 0;
+                const maxDefault = field.max ?? 100;
+                const pair = Array.isArray(value)
+                    ? value
+                    : typeof value === 'object' && value !== null && 'min' in value && 'max' in value
+                        ? [value.min, value.max]
+                        : [minDefault, maxDefault];
+
+                const [minVal, maxVal] = pair;
+                const commitAt = (idx, newVal) => {
+                    const next = [...pair];
+                    next[idx] = newVal === '' ? '' : Number(newVal);
+                    commit(next);
+                };
+
+                return (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 0.5, alignItems: 'center' }}>
+                        <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', pr: 0.5 }}>Min:</Typography>
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={minVal ?? ''}
+                            onChange={(e) => commitAt(0, e.target.value)}
+                            disabled={disabled}
+                            inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
+                        />
+                        <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', pl: 0.5, pr: 0.5 }}>Max:</Typography>
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={maxVal ?? ''}
+                            onChange={(e) => commitAt(1, e.target.value)}
+                            disabled={disabled}
+                            inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
+                        />
+                        {error && (
+                            <FormHelperText error sx={{ gridColumn: '1 / -1', mt: 0 }}>
+                                {error}
+                            </FormHelperText>
+                        )}
+                    </Box>
+                );
+            }
+
+            // Dual-thumb slider: [min, max]
+            case 'sliderRange': {
+                const minDefault = field.min ?? 0;
+                const maxDefault = field.max ?? 100;
+                const step = field.step ?? 1;
+
+                const rangeVal = Array.isArray(value) && value.length === 2
+                    ? value
+                    : [minDefault, maxDefault];
+
                 return (
                     <Slider
                         size="small"
-                        min={field.min ?? 0}
-                        max={field.max ?? 100}
-                        step={field.step ?? 1}
-                        value={typeof value === 'number' ? value : (field.min ?? 0)}
+                        min={minDefault}
+                        max={maxDefault}
+                        step={step}
+                        value={rangeVal}
                         onChange={(_, v) => commit(v)}
                         disabled={disabled}
                     />
                 );
+            }
 
             default:
                 return <Typography color="text.disabled">Unsupported</Typography>;
