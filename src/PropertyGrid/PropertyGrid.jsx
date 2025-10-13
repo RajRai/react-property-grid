@@ -1,3 +1,4 @@
+// PropertyGrid.jsx — Unreal-style grid view with collapsible sections
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -22,19 +23,13 @@ const isOptionObject = (opt) => typeof opt === 'object' && opt !== null && 'valu
 const toOptionList = (options = []) =>
     options.map((o) => (isOptionObject(o) ? o : { value: o, label: String(o) }));
 
-// Back-compat: prefer renderValue/parseValue, fall back to transformIn/transformOut
-const getRenderFn = (field) => field.renderValue || field.transformIn;
-const getParseFn = (field) => field.parseValue || field.transformOut;
-
 const getFieldValue = (field, object, key) => {
     const raw = field.get ? field.get(object) : object?.[key];
-    const render = getRenderFn(field);
-    return render ? render(raw, object) : raw;
+    return typeof field.renderValue === 'function' ? field.renderValue(raw, object) : raw;
 };
 
 const setFieldValue = (field, object, key, uiValue) => {
-    const parse = getParseFn(field);
-    const out = parse ? parse(uiValue, object) : uiValue;
+    const out = typeof field.parseValue === 'function' ? field.parseValue(uiValue, object) : uiValue;
     if (field.set) field.set(object, out);
     else object[key] = out;
     return out;
@@ -70,14 +65,12 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
         </Typography>
     );
 
-    // Helpers for compact numeric inputs (allow empty string while editing)
+    // compact numeric input helpers
     const numberInputProps = { style: { fontSize: '0.8rem', padding: '2px 6px' } };
     const toMaybeNumber = (v) => (v === '' ? '' : Number(v));
 
     const control = (() => {
-        let type = field.type;
-
-        switch (type) {
+        switch (field.type) {
             case 'boolean':
                 return (
                     <FormControlLabel
@@ -125,7 +118,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
 
             case 'singleSelect':
             case 'multiSelect': {
-                const multiple = type === 'multiSelect';
+                const multiple = field.type === 'multiSelect';
                 const opts = toOptionList(field.options || []);
                 const val = value ?? (multiple ? [] : '');
                 return (
@@ -239,7 +232,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                 );
             }
 
-// Dual-thumb slider with static end labels (left/right) + a bit more padding
+            // Dual-thumb slider with static end labels (left/right) + a bit more padding
             case 'rangeSlider': {
                 const minDefault = field.min ?? 0;
                 const maxDefault = field.max ?? 100;
@@ -255,7 +248,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                                 color: 'text.secondary',
                                 minWidth: 40,
                                 textAlign: 'right',
-                                pr: 1,           // 👈 extra right padding
+                                pr: 1,
                             }}
                         >
                             {rangeVal[0]}
@@ -279,7 +272,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                                 color: 'text.secondary',
                                 minWidth: 40,
                                 textAlign: 'left',
-                                pl: 1,           // 👈 extra left padding
+                                pl: 1,
                             }}
                         >
                             {rangeVal[1]}
@@ -434,21 +427,30 @@ PropertySection.propTypes = {
 
 // ---------- Root ----------
 export default function PropertyGrid({ schema, object, onChange, disabled = false }) {
+    // Accept either a single section object or an array of section objects
+    const sections = Array.isArray(schema) ? schema : [schema];
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <PropertySection
-                section={schema}
-                object={object}
-                onChange={onChange}
-                disabled={disabled}
-                depth={0}
-            />
+            {sections.map((sec, idx) => (
+                <PropertySection
+                    key={`${sec.section || 'root'}-${idx}`}
+                    section={sec}
+                    object={object}
+                    onChange={onChange}
+                    disabled={disabled}
+                    depth={0}
+                />
+            ))}
         </Box>
     );
 }
 
 PropertyGrid.propTypes = {
-    schema: PropTypes.object.isRequired,
+    schema: PropTypes.oneOfType([
+        PropTypes.object,
+        PropTypes.arrayOf(PropTypes.object),
+    ]).isRequired,
     object: PropTypes.object.isRequired,
     onChange: PropTypes.func,
     disabled: PropTypes.bool,

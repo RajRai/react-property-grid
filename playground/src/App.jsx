@@ -13,224 +13,305 @@ export default function App() {
         fullscreen: true,
         quality: 1,
         tags: ['cinematic'],
-        camera: { fovRange: [45, 90], lodRange: [0, 3], isoRange: [100, 800] },
-        render: { flags: { ambientOcclusion: true }, opacity: 0.8 },
+        camera: {
+            fovRange: [45, 90],
+            lodRange: [0, 3],
+            isoRange: [100, 800],
+            exposure: { shutter: 1 / 120, iso: 400 },
+            lens: { focal: 35, focusDistance: 2.5 },
+        },
+        render: {
+            flags: { ambientOcclusion: true },
+            opacity: 0.8,
+            tone: { op: 'ACES', exposureComp: 0.0, shoulder: [0.2, 0.8] },
+        },
         resolutionIndex: 2,
     });
     const [globalDisabled, setGlobalDisabled] = useState(false);
 
-    // --- Built-in example schema (JS object with functions)
-    const builtinSchema = useMemo(() => ({
-        section: 'Scene',
-        fields: {
-            name: {
-                type: 'string',
-                label: 'Name',
-                validate: (v) => (!v ? 'Required' : null),
+    // --- Built-in example schema (multi top-level + nested children)
+    const builtinSchema = useMemo(() => ([
+        {
+            section: 'Scene',
+            fields: {
+                name: {
+                    type: 'string',
+                    label: 'Name',
+                    validate: (v) => (!v ? 'Required' : null),
+                },
+                resolution: {
+                    type: 'singleSelect',
+                    label: 'Resolution',
+                    options: ['720p', '1080p', '4K'],
+                    get: (o) => o.resolutionIndex,
+                    set: (o, v) => { o.resolutionIndex = v; },
+                    renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
+                    parseValue: (ui) => ['720p', '1080p', '4K'].indexOf(ui),
+                },
+                quality: {
+                    type: 'singleSelect',
+                    label: 'Quality',
+                    options: [
+                        { value: 0, label: 'Low' },
+                        { value: 1, label: 'Medium' },
+                        { value: 2, label: 'High' },
+                    ],
+                    validate: (v) => (v == null ? 'Choose a quality' : null),
+                },
+                fullscreen: { type: 'boolean', label: 'Fullscreen' },
             },
-
-            // Numeric in data; labeled in UI via render/parse
-            resolution: {
-                type: 'singleSelect',
-                label: 'Resolution',
-                options: ['720p', '1080p', '4K'],
-                get: (obj) => obj.resolutionIndex,
-                set: (obj, v) => { obj.resolutionIndex = v; },
-                renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
-                parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
-            },
-
-            // Classic numeric select (no transforms required)
-            quality: {
-                type: 'singleSelect',
-                label: 'Quality',
-                options: [
-                    { value: 0, label: 'Low' },
-                    { value: 1, label: 'Medium' },
-                    { value: 2, label: 'High' },
-                ],
-                validate: (v) => (v == null ? 'Choose a quality' : null),
-            },
-
-            fullscreen: { type: 'boolean', label: 'Fullscreen' },
         },
 
-        children: [
-            {
-                section: 'Dimensions',
-                fields: {
-                    width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
-                    height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+        {
+            section: 'Dimensions',
+            fields: {
+                width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
+                height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+            },
+        },
+
+        {
+            section: 'Camera',
+            fields: {
+                fovRange: {
+                    type: 'range',
+                    label: 'FOV Range (deg)',
+                    min: 1, max: 170,
+                    get: (o) => o.camera.fovRange,
+                    set: (o, v) => { o.camera.fovRange = v; },
+                    validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
+                },
+                lodRange: {
+                    type: 'rangeSlider',
+                    label: 'LOD Range',
+                    min: 0, max: 5, step: 1,
+                    get: (o) => o.camera.lodRange,
+                    set: (o, v) => { o.camera.lodRange = v; },
+                },
+                isoRange: {
+                    type: 'range',
+                    label: 'ISO Range',
+                    min: 50, max: 12800, step: 50,
+                    get: (o) => o.camera.isoRange,
+                    set: (o, v) => { o.camera.isoRange = v; },
                 },
             },
-
-            {
-                section: 'Camera',
-                fields: {
-                    // Two inputs with "Min:" / "Max:" labels
-                    fovRange: {
-                        type: 'range', // "range" also aliases to range
-                        label: 'FOV Range (deg)',
-                        min: 1, max: 170,
-                        get: (obj) => obj.camera.fovRange,
-                        set: (obj, v) => { obj.camera.fovRange = v; },
-                        validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
-                    },
-
-                    // Dual-thumb slider with both values shown
-                    lodRange: {
-                        type: 'rangeSlider',
-                        label: 'LOD Range',
-                        min: 0, max: 5, step: 1,
-                        get: (obj) => obj.camera.lodRange,
-                        set: (obj, v) => { obj.camera.lodRange = v; },
-                    },
-
-                    // Using the 'range' alias (same as range)
-                    isoRange: {
-                        type: 'range',
-                        label: 'ISO Range',
-                        min: 50, max: 12800, step: 50,
-                        get: (obj) => obj.camera.isoRange,
-                        set: (obj, v) => { obj.camera.isoRange = v; },
+            children: [
+                {
+                    section: 'Exposure',
+                    fields: {
+                        shutter: {
+                            type: 'number',
+                            label: 'Shutter (1/x s)',
+                            get: (o) => o.camera.exposure.shutter,
+                            set: (o, v) => { o.camera.exposure.shutter = v; },
+                            validate: (v) => (v <= 0 ? 'Must be > 0' : null),
+                        },
+                        iso: {
+                            type: 'number',
+                            label: 'ISO',
+                            get: (o) => o.camera.exposure.iso,
+                            set: (o, v) => { o.camera.exposure.iso = v; },
+                            validate: (v) => (v < 50 ? 'Too low' : null),
+                        },
                     },
                 },
-            },
-
-            {
-                section: 'Rendering',
-                fields: {
-                    ambientOcclusion: {
-                        type: 'boolean',
-                        label: 'Ambient Occlusion',
-                        get: (obj) => obj.render.flags.ambientOcclusion,
-                        set: (obj, v) => { obj.render.flags.ambientOcclusion = v; },
-                    },
-                    // Single-value slider + number input (synced)
-                    opacity: {
-                        type: 'numberSlider',
-                        label: 'Opacity',
-                        min: 0, max: 1, step: 0.01,
-                        get: (obj) => obj.render.opacity,
-                        set: (obj, v) => { obj.render.opacity = v; },
-                    },
-                    tags: {
-                        type: 'multiSelect',
-                        label: 'Tags',
-                        options: ['cinematic', 'draft', 'final', 'internal'],
+                {
+                    section: 'Lens',
+                    fields: {
+                        focal: {
+                            type: 'numberSlider',
+                            label: 'Focal Length (mm)',
+                            min: 12, max: 200, step: 1,
+                            get: (o) => o.camera.lens.focal,
+                            set: (o, v) => { o.camera.lens.focal = v; },
+                        },
+                        focusDistance: {
+                            type: 'number',
+                            label: 'Focus Distance (m)',
+                            get: (o) => o.camera.lens.focusDistance,
+                            set: (o, v) => { o.camera.lens.focusDistance = v; },
+                            validate: (v) => (v < 0 ? 'Must be ≥ 0' : null),
+                        },
                     },
                 },
-            },
+            ],
+        },
 
-            {
-                section: 'Experimental',
-                collapsed: true,
-                disabled: true, // whole section disabled
-                fields: {
-                    debugFeature: { type: 'boolean', label: 'New Debug Toggle' },
+        {
+            section: 'Rendering',
+            fields: {
+                ambientOcclusion: {
+                    type: 'boolean',
+                    label: 'Ambient Occlusion',
+                    get: (o) => o.render.flags.ambientOcclusion,
+                    set: (o, v) => { o.render.flags.ambientOcclusion = v; },
+                },
+                opacity: {
+                    type: 'numberSlider',
+                    label: 'Opacity',
+                    min: 0, max: 1, step: 0.01,
+                    get: (o) => o.render.opacity,
+                    set: (o, v) => { o.render.opacity = v; },
+                },
+                tags: {
+                    type: 'multiSelect',
+                    label: 'Tags',
+                    options: ['cinematic', 'draft', 'final', 'internal'],
                 },
             },
-        ],
-    }), []);
+            children: [
+                {
+                    section: 'Tone Mapping',
+                    fields: {
+                        op: {
+                            type: 'singleSelect',
+                            label: 'Operator',
+                            options: ['ACES', 'Reinhard', 'Filmic'],
+                            get: (o) => o.render.tone.op,
+                            set: (o, v) => { o.render.tone.op = v; },
+                        },
+                        exposureComp: {
+                            type: 'numberSlider',
+                            label: 'Exposure Comp (EV)',
+                            min: -5, max: 5, step: 0.1,
+                            get: (o) => o.render.tone.exposureComp,
+                            set: (o, v) => { o.render.tone.exposureComp = v; },
+                        },
+                        shoulder: {
+                            type: 'rangeSlider',
+                            label: 'Shoulder',
+                            min: 0, max: 1, step: 0.01,
+                            get: (o) => o.render.tone.shoulder,
+                            set: (o, v) => { o.render.tone.shoulder = v; },
+                        },
+                    },
+                    children: [
+                        {
+                            section: 'Advanced Tone',
+                            collapsed: true,
+                            fields: {
+                                rolloff: {
+                                    type: 'numberSlider',
+                                    label: 'Rolloff',
+                                    min: 0, max: 1, step: 0.01,
+                                    get: (o) => o.render.tone.rolloff ?? 0.5,
+                                    set: (o, v) => { o.render.tone.rolloff = v; },
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
 
-    // --- Editable schema state (JS expression editor)
+        {
+            section: 'Experimental',
+            collapsed: true,
+            disabled: true,
+            fields: {
+                debugFeature: { type: 'boolean', label: 'New Debug Toggle' },
+            },
+        },
+    ]), []);
+
+    // --- Editable schema state (JS expression editor) with nesting
     const initialEditor = useMemo(
-        // The editor expects a JS *expression* that evaluates to the schema object
-        () => `({
-  section: 'Scene',
-  fields: {
-    name: {
-      type: 'string',
-      label: 'Name',
-      validate: (v) => (!v ? 'Required' : null),
+        () => `([
+  {
+    section: 'Scene',
+    fields: {
+      name: { type: 'string', label: 'Name', validate: (v) => (!v ? 'Required' : null) },
+      resolution: {
+        type: 'singleSelect', label: 'Resolution', options: ['720p','1080p','4K'],
+        get: (o) => o.resolutionIndex, set: (o, v) => { o.resolutionIndex = v; },
+        renderValue: (i) => ['720p','1080p','4K'][i] ?? '', parseValue: (s) => ['720p','1080p','4K'].indexOf(s),
+      },
+      quality: {
+        type: 'singleSelect', label: 'Quality',
+        options: [{value:0,label:'Low'},{value:1,label:'Medium'},{value:2,label:'High'}],
+        validate: (v) => (v == null ? 'Choose a quality' : null),
+      },
+      fullscreen: { type: 'boolean', label: 'Fullscreen' },
     },
-    resolution: {
-      type: 'singleSelect',
-      label: 'Resolution',
-      options: ['720p', '1080p', '4K'],
-      get: (obj) => obj.resolutionIndex,
-      set: (obj, v) => { obj.resolutionIndex = v; },
-      renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
-      parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
-    },
-    quality: {
-      type: 'singleSelect',
-      label: 'Quality',
-      options: [
-        { value: 0, label: 'Low' },
-        { value: 1, label: 'Medium' },
-        { value: 2, label: 'High' },
-      ],
-      validate: (v) => (v == null ? 'Choose a quality' : null),
-    },
-    fullscreen: { type: 'boolean', label: 'Fullscreen' },
   },
-  children: [
-    {
-      section: 'Dimensions',
-      fields: {
-        width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
-        height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+  {
+    section: 'Dimensions',
+    fields: {
+      width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
+      height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+    },
+  },
+  {
+    section: 'Camera',
+    fields: {
+      fovRange: { type: 'range', label: 'FOV Range (deg)', min:1, max:170,
+        get: (o) => o.camera.fovRange, set: (o, v) => { o.camera.fovRange = v; },
+        validate: ([min,max]) => (min > max ? 'Min must be ≤ Max' : null),
+      },
+      lodRange: { type: 'rangeSlider', label: 'LOD Range', min:0, max:5, step:1,
+        get: (o) => o.camera.lodRange, set: (o, v) => { o.camera.lodRange = v; },
+      },
+      isoRange: { type: 'range', label: 'ISO Range', min:50, max:12800, step:50,
+        get: (o) => o.camera.isoRange, set: (o, v) => { o.camera.isoRange = v; },
       },
     },
-    {
-      section: 'Camera',
-      fields: {
-        fovRange: {
-          type: 'range', // "range" also works
-          label: 'FOV Range (deg)',
-          min: 1, max: 170,
-          get: (obj) => obj.camera.fovRange,
-          set: (obj, v) => { obj.camera.fovRange = v; },
-          validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
-        },
-        lodRange: {
-          type: 'rangeSlider',
-          label: 'LOD Range',
-          min: 0, max: 5, step: 1,
-          get: (obj) => obj.camera.lodRange,
-          set: (obj, v) => { obj.camera.lodRange = v; },
-        },
-        isoRange: {
-          type: 'range',
-          label: 'ISO Range',
-          min: 50, max: 12800, step: 50,
-          get: (obj) => obj.camera.isoRange,
-          set: (obj, v) => { obj.camera.isoRange = v; },
+    children: [
+      {
+        section: 'Exposure',
+        fields: {
+          shutter: { type:'number', label:'Shutter (1/x s)', get:(o)=>o.camera.exposure.shutter, set:(o,v)=>{o.camera.exposure.shutter=v;},
+                     validate:(v)=> (v<=0 ? 'Must be > 0' : null) },
+          iso:     { type:'number', label:'ISO', get:(o)=>o.camera.exposure.iso, set:(o,v)=>{o.camera.exposure.iso=v;},
+                     validate:(v)=> (v<50 ? 'Too low' : null) },
         },
       },
-    },
-    {
-      section: 'Rendering',
-      fields: {
-        ambientOcclusion: {
-          type: 'boolean',
-          label: 'Ambient Occlusion',
-          get: (obj) => obj.render.flags.ambientOcclusion,
-          set: (obj, v) => { obj.render.flags.ambientOcclusion = v; },
-        },
-        opacity: {
-          type: 'numberSlider',
-          label: 'Opacity',
-          min: 0, max: 1, step: 0.01,
-          get: (obj) => obj.render.opacity,
-          set: (obj, v) => { obj.render.opacity = v; },
-        },
-        tags: {
-          type: 'multiSelect',
-          label: 'Tags',
-          options: ['cinematic', 'draft', 'final', 'internal'],
+      {
+        section: 'Lens',
+        fields: {
+          focal: { type:'numberSlider', label:'Focal Length (mm)', min:12, max:200, step:1,
+                   get:(o)=>o.camera.lens.focal, set:(o,v)=>{o.camera.lens.focal=v;} },
+          focusDistance: { type:'number', label:'Focus Distance (m)',
+                   get:(o)=>o.camera.lens.focusDistance, set:(o,v)=>{o.camera.lens.focusDistance=v;},
+                   validate:(v)=> (v<0 ? 'Must be ≥ 0' : null) },
         },
       },
+    ],
+  },
+  {
+    section: 'Rendering',
+    fields: {
+      ambientOcclusion: { type:'boolean', label:'Ambient Occlusion',
+        get:(o)=>o.render.flags.ambientOcclusion, set:(o,v)=>{o.render.flags.ambientOcclusion=v;} },
+      opacity: { type:'numberSlider', label:'Opacity', min:0, max:1, step:0.01,
+        get:(o)=>o.render.opacity, set:(o,v)=>{o.render.opacity=v;} },
+      tags: { type:'multiSelect', label:'Tags', options:['cinematic','draft','final','internal'] },
     },
-    {
-      section: 'Experimental',
-      collapsed: true,
-      disabled: true,
-      fields: { debugFeature: { type: 'boolean', label: 'New Debug Toggle' } },
-    },
-  ],
-})`,
+    children: [
+      {
+        section: 'Tone Mapping',
+        fields: {
+          op: { type:'singleSelect', label:'Operator', options:['ACES','Reinhard','Filmic'],
+                get:(o)=>o.render.tone.op, set:(o,v)=>{o.render.tone.op=v;} },
+          exposureComp: { type:'numberSlider', label:'Exposure Comp (EV)', min:-5, max:5, step:0.1,
+                get:(o)=>o.render.tone.exposureComp, set:(o,v)=>{o.render.tone.exposureComp=v;} },
+          shoulder: { type:'rangeSlider', label:'Shoulder', min:0, max:1, step:0.01,
+                get:(o)=>o.render.tone.shoulder, set:(o,v)=>{o.render.tone.shoulder=v;} },
+        },
+        children: [
+          { section:'Advanced Tone', collapsed:true,
+            fields: {
+              rolloff: { type:'numberSlider', label:'Rolloff', min:0, max:1, step:0.01,
+                         get:(o)=>o.render.tone.rolloff ?? 0.5, set:(o,v)=>{o.render.tone.rolloff=v;} },
+            }
+          }
+        ]
+      }
+    ]
+  },
+  { section: 'Experimental', collapsed: true, disabled: true,
+    fields: { debugFeature: { type: 'boolean', label: 'New Debug Toggle' } } },
+])`,
         []
     );
 
@@ -240,13 +321,12 @@ export default function App() {
 
     const applyEditedSchema = () => {
         try {
-            // Evaluate the editor content as a *single JS expression* returning an object
-            // NOTE: Playground-only! Do not ship eval in your library.
+            // Playground-only: eval a single JS expression that returns object/array
             // eslint-disable-next-line no-new-func
             const fn = new Function(`return (${schemaEditor});`);
             const obj = fn();
-            if (typeof obj !== 'object' || obj == null) {
-                throw new Error('Schema must evaluate to an object.');
+            if (!obj || typeof obj !== 'object') {
+                throw new Error('Schema must evaluate to an object or an array of objects.');
             }
             setSchema(obj);
             setSchemaError(null);
@@ -284,14 +364,14 @@ export default function App() {
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                     {/* Left: Schema Editor */}
                     <Paper sx={{ flex: 1, minWidth: 300 }}>
-                        <Typography variant="subtitle2" gutterBottom>Schema (JS object expression)</Typography>
+                        <Typography variant="subtitle2" gutterBottom>Schema (JS object/array expression)</Typography>
                         <TextField
                             multiline
                             minRows={24}
                             value={schemaEditor}
                             onChange={(e) => setSchemaEditor(e.target.value)}
                             fullWidth
-                            placeholder={`({ section: '...', fields: { ... } })`}
+                            placeholder={`([{ section: '...', fields: { ... } }, ...])`}
                             InputProps={{
                                 sx: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, lineHeight: 1.4 }
                             }}
