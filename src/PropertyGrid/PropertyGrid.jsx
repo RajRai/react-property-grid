@@ -24,15 +24,13 @@ const toOptionList = (options = []) =>
     options.map((o) => (isOptionObject(o) ? o : { value: o, label: String(o) }));
 
 const getFieldValue = (field, object, key) => {
-    const raw = field.get ? field.get(object) : object?.[key];
-    return typeof field.renderValue === 'function' ? field.renderValue(raw, object) : raw;
+    return field.get ? field.get(object) : object?.[key];
 };
 
 const setFieldValue = (field, object, key, uiValue) => {
-    const out = typeof field.parseValue === 'function' ? field.parseValue(uiValue, object) : uiValue;
-    if (field.set) field.set(object, out);
-    else object[key] = out;
-    return out;
+    if (field.set) field.set(object, uiValue);
+    else object[key] = uiValue;
+    return uiValue;
 };
 
 const runValidate = (field, val, object) =>
@@ -116,7 +114,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                     />
                 );
 
-            case 'singleSelect':
+            case 'select':
             case 'multiSelect': {
                 const multiple = field.type === 'multiSelect';
                 const opts = toOptionList(field.options || []);

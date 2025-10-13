@@ -40,16 +40,15 @@ export default function App() {
                     validate: (v) => (!v ? 'Required' : null),
                 },
                 resolution: {
-                    type: 'singleSelect',
+                    type: 'select',
                     label: 'Resolution',
                     options: ['720p', '1080p', '4K'],
-                    get: (o) => o.resolutionIndex,
-                    set: (o, v) => { o.resolutionIndex = v; },
-                    renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
-                    parseValue: (ui) => ['720p', '1080p', '4K'].indexOf(ui),
+                    // example of transforming a value before display/storage
+                    get: (o) => ['720p', '1080p', '4K'][o.resolutionIndex] ?? '',
+                    set: (o, v) => { o.resolutionIndex = ['720p', '1080p', '4K'].indexOf(v); },
                 },
                 quality: {
-                    type: 'singleSelect',
+                    type: 'select',
                     label: 'Quality',
                     options: [
                         { value: 0, label: 'Low' },
@@ -165,7 +164,7 @@ export default function App() {
                     section: 'Tone Mapping',
                     fields: {
                         op: {
-                            type: 'singleSelect',
+                            type: 'select',
                             label: 'Operator',
                             options: ['ACES', 'Reinhard', 'Filmic'],
                             get: (o) => o.render.tone.op,
@@ -227,16 +226,15 @@ export default function App() {
         validate: (v) => (!v ? 'Required' : null),
       },
       resolution: {
-        type: 'singleSelect',
+        type: 'select',
         label: 'Resolution',
         options: ['720p', '1080p', '4K'],
-        get: (o) => o.resolutionIndex,
-        set: (o, v) => { o.resolutionIndex = v; },
-        renderValue: (i) => ['720p','1080p','4K'][i] ?? '',
-        parseValue: (s) => ['720p','1080p','4K'].indexOf(s),
+        // example of transforming a value before display/storage
+        get: (o) => ['720p', '1080p', '4K'][o.resolutionIndex] ?? '',
+        set: (o, v) => { o.resolutionIndex = ['720p', '1080p', '4K'].indexOf(v); },
       },
       quality: {
-        type: 'singleSelect',
+        type: 'select',
         label: 'Quality',
         options: [
           { value: 0, label: 'Low' },
@@ -369,7 +367,7 @@ export default function App() {
         section: 'Tone Mapping',
         fields: {
           op: {
-            type: 'singleSelect',
+            type: 'select',
             label: 'Operator',
             options: ['ACES', 'Reinhard', 'Filmic'],
             get: (o) => o.render.tone.op,
