@@ -3,7 +3,7 @@ import {
     CssBaseline, Container, Paper, ThemeProvider, createTheme,
     Box, Typography, Stack, Button, TextField, Alert
 } from '@mui/material';
-import { PropertyGrid } from '@rajrai/react-property-grid'; // or your local alias
+import { PropertyGrid } from '@rajrai/react-property-grid';
 
 export default function App() {
     const [data, setData] = useState({

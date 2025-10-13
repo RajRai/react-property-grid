@@ -1,6 +1,6 @@
 {
   "name": "@rajrai/react-property-grid",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Condensed hierarchical property grid for React + MUI",
   "author": "Raj Rai <raj.rai.ct@gmail.com>",
   "license": "MIT",
@@ -48,12 +48,13 @@
     "build": "npm run clean && vite build && npm run copy-meta",
     "clean": "rimraf dist",
     "copy-meta": "copyfiles LICENSE README.md package.json dist",
-    "play": "vite --config playground/vite.config.js"
+    "play": "vite --config playground/vite.config.js",
+    "dist": "npm run build && cd dist && npm pack && cd .. && cd playground && rimraf node_modules/@rajrai && rimraf package-lock.json && npm install --no-package-lock && cd .. && vite --config playground/dist.vite.config.js"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0",
-    "@mui/icons-material": "^6.0.0",
+    "@mui/icons-material": "^5.15.0 || ^6.0.0",
     "@mui/material": "^5.15.0 || ^6.0.0",
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0"
@@ -63,8 +64,5 @@
     "copyfiles": "^2.4.1",
     "rimraf": "^6.0.1",
     "vite": "^5.4.0"
-  },
-  "dependencies": {
-    "@rajrai/react-property-grid": "^0.1.1"
   }
 }
