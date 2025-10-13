@@ -221,99 +221,209 @@ export default function App() {
   {
     section: 'Scene',
     fields: {
-      name: { type: 'string', label: 'Name', validate: (v) => (!v ? 'Required' : null) },
+      name: {
+        type: 'string',
+        label: 'Name',
+        validate: (v) => (!v ? 'Required' : null),
+      },
       resolution: {
-        type: 'singleSelect', label: 'Resolution', options: ['720p','1080p','4K'],
-        get: (o) => o.resolutionIndex, set: (o, v) => { o.resolutionIndex = v; },
-        renderValue: (i) => ['720p','1080p','4K'][i] ?? '', parseValue: (s) => ['720p','1080p','4K'].indexOf(s),
+        type: 'singleSelect',
+        label: 'Resolution',
+        options: ['720p', '1080p', '4K'],
+        get: (o) => o.resolutionIndex,
+        set: (o, v) => { o.resolutionIndex = v; },
+        renderValue: (i) => ['720p','1080p','4K'][i] ?? '',
+        parseValue: (s) => ['720p','1080p','4K'].indexOf(s),
       },
       quality: {
-        type: 'singleSelect', label: 'Quality',
-        options: [{value:0,label:'Low'},{value:1,label:'Medium'},{value:2,label:'High'}],
+        type: 'singleSelect',
+        label: 'Quality',
+        options: [
+          { value: 0, label: 'Low' },
+          { value: 1, label: 'Medium' },
+          { value: 2, label: 'High' },
+        ],
         validate: (v) => (v == null ? 'Choose a quality' : null),
       },
       fullscreen: { type: 'boolean', label: 'Fullscreen' },
     },
   },
+
   {
     section: 'Dimensions',
     fields: {
-      width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
-      height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+      width: {
+        type: 'number',
+        label: 'Width',
+        validate: (v) => (v < 320 ? 'Too small' : null),
+      },
+      height: {
+        type: 'number',
+        label: 'Height',
+        validate: (v) => (v < 200 ? 'Too small' : null),
+      },
     },
   },
+
   {
     section: 'Camera',
     fields: {
-      fovRange: { type: 'range', label: 'FOV Range (deg)', min:1, max:170,
-        get: (o) => o.camera.fovRange, set: (o, v) => { o.camera.fovRange = v; },
-        validate: ([min,max]) => (min > max ? 'Min must be ≤ Max' : null),
+      fovRange: {
+        type: 'range',
+        label: 'FOV Range (deg)',
+        min: 1,
+        max: 170,
+        get: (o) => o.camera.fovRange,
+        set: (o, v) => { o.camera.fovRange = v; },
+        validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
       },
-      lodRange: { type: 'rangeSlider', label: 'LOD Range', min:0, max:5, step:1,
-        get: (o) => o.camera.lodRange, set: (o, v) => { o.camera.lodRange = v; },
+      lodRange: {
+        type: 'rangeSlider',
+        label: 'LOD Range',
+        min: 0,
+        max: 5,
+        step: 1,
+        get: (o) => o.camera.lodRange,
+        set: (o, v) => { o.camera.lodRange = v; },
       },
-      isoRange: { type: 'range', label: 'ISO Range', min:50, max:12800, step:50,
-        get: (o) => o.camera.isoRange, set: (o, v) => { o.camera.isoRange = v; },
+      isoRange: {
+        type: 'range',
+        label: 'ISO Range',
+        min: 50,
+        max: 12800,
+        step: 50,
+        get: (o) => o.camera.isoRange,
+        set: (o, v) => { o.camera.isoRange = v; },
       },
     },
     children: [
       {
         section: 'Exposure',
         fields: {
-          shutter: { type:'number', label:'Shutter (1/x s)', get:(o)=>o.camera.exposure.shutter, set:(o,v)=>{o.camera.exposure.shutter=v;},
-                     validate:(v)=> (v<=0 ? 'Must be > 0' : null) },
-          iso:     { type:'number', label:'ISO', get:(o)=>o.camera.exposure.iso, set:(o,v)=>{o.camera.exposure.iso=v;},
-                     validate:(v)=> (v<50 ? 'Too low' : null) },
+          shutter: {
+            type: 'number',
+            label: 'Shutter (1/x s)',
+            get: (o) => o.camera.exposure.shutter,
+            set: (o, v) => { o.camera.exposure.shutter = v; },
+            validate: (v) => (v <= 0 ? 'Must be > 0' : null),
+          },
+          iso: {
+            type: 'number',
+            label: 'ISO',
+            get: (o) => o.camera.exposure.iso,
+            set: (o, v) => { o.camera.exposure.iso = v; },
+            validate: (v) => (v < 50 ? 'Too low' : null),
+          },
         },
       },
       {
         section: 'Lens',
         fields: {
-          focal: { type:'numberSlider', label:'Focal Length (mm)', min:12, max:200, step:1,
-                   get:(o)=>o.camera.lens.focal, set:(o,v)=>{o.camera.lens.focal=v;} },
-          focusDistance: { type:'number', label:'Focus Distance (m)',
-                   get:(o)=>o.camera.lens.focusDistance, set:(o,v)=>{o.camera.lens.focusDistance=v;},
-                   validate:(v)=> (v<0 ? 'Must be ≥ 0' : null) },
+          focal: {
+            type: 'numberSlider',
+            label: 'Focal Length (mm)',
+            min: 12,
+            max: 200,
+            step: 1,
+            get: (o) => o.camera.lens.focal,
+            set: (o, v) => { o.camera.lens.focal = v; },
+          },
+          focusDistance: {
+            type: 'number',
+            label: 'Focus Distance (m)',
+            get: (o) => o.camera.lens.focusDistance,
+            set: (o, v) => { o.camera.lens.focusDistance = v; },
+            validate: (v) => (v < 0 ? 'Must be ≥ 0' : null),
+          },
         },
       },
     ],
   },
+
   {
     section: 'Rendering',
     fields: {
-      ambientOcclusion: { type:'boolean', label:'Ambient Occlusion',
-        get:(o)=>o.render.flags.ambientOcclusion, set:(o,v)=>{o.render.flags.ambientOcclusion=v;} },
-      opacity: { type:'numberSlider', label:'Opacity', min:0, max:1, step:0.01,
-        get:(o)=>o.render.opacity, set:(o,v)=>{o.render.opacity=v;} },
-      tags: { type:'multiSelect', label:'Tags', options:['cinematic','draft','final','internal'] },
+      ambientOcclusion: {
+        type: 'boolean',
+        label: 'Ambient Occlusion',
+        get: (o) => o.render.flags.ambientOcclusion,
+        set: (o, v) => { o.render.flags.ambientOcclusion = v; },
+      },
+      opacity: {
+        type: 'numberSlider',
+        label: 'Opacity',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        get: (o) => o.render.opacity,
+        set: (o, v) => { o.render.opacity = v; },
+      },
+      tags: {
+        type: 'multiSelect',
+        label: 'Tags',
+        options: ['cinematic', 'draft', 'final', 'internal'],
+      },
     },
     children: [
       {
         section: 'Tone Mapping',
         fields: {
-          op: { type:'singleSelect', label:'Operator', options:['ACES','Reinhard','Filmic'],
-                get:(o)=>o.render.tone.op, set:(o,v)=>{o.render.tone.op=v;} },
-          exposureComp: { type:'numberSlider', label:'Exposure Comp (EV)', min:-5, max:5, step:0.1,
-                get:(o)=>o.render.tone.exposureComp, set:(o,v)=>{o.render.tone.exposureComp=v;} },
-          shoulder: { type:'rangeSlider', label:'Shoulder', min:0, max:1, step:0.01,
-                get:(o)=>o.render.tone.shoulder, set:(o,v)=>{o.render.tone.shoulder=v;} },
+          op: {
+            type: 'singleSelect',
+            label: 'Operator',
+            options: ['ACES', 'Reinhard', 'Filmic'],
+            get: (o) => o.render.tone.op,
+            set: (o, v) => { o.render.tone.op = v; },
+          },
+          exposureComp: {
+            type: 'numberSlider',
+            label: 'Exposure Comp (EV)',
+            min: -5,
+            max: 5,
+            step: 0.1,
+            get: (o) => o.render.tone.exposureComp,
+            set: (o, v) => { o.render.tone.exposureComp = v; },
+          },
+          shoulder: {
+            type: 'rangeSlider',
+            label: 'Shoulder',
+            min: 0,
+            max: 1,
+            step: 0.01,
+            get: (o) => o.render.tone.shoulder,
+            set: (o, v) => { o.render.tone.shoulder = v; },
+          },
         },
         children: [
-          { section:'Advanced Tone', collapsed:true,
+          {
+            section: 'Advanced Tone',
+            collapsed: true,
             fields: {
-              rolloff: { type:'numberSlider', label:'Rolloff', min:0, max:1, step:0.01,
-                         get:(o)=>o.render.tone.rolloff ?? 0.5, set:(o,v)=>{o.render.tone.rolloff=v;} },
-            }
-          }
-        ]
-      }
-    ]
+              rolloff: {
+                type: 'numberSlider',
+                label: 'Rolloff',
+                min: 0,
+                max: 1,
+                step: 0.01,
+                get: (o) => o.render.tone.rolloff ?? 0.5,
+                set: (o, v) => { o.render.tone.rolloff = v; },
+              },
+            },
+          },
+        ],
+      },
+    ],
   },
-  { section: 'Experimental', collapsed: true, disabled: true,
-    fields: { debugFeature: { type: 'boolean', label: 'New Debug Toggle' } } },
-])`,
-        []
-    );
+
+  {
+    section: 'Experimental',
+    collapsed: true,
+    disabled: true,
+    fields: {
+      debugFeature: { type: 'boolean', label: 'New Debug Toggle' },
+    },
+  },
+])`, []);
 
     const [schemaEditor, setSchemaEditor] = useState(initialEditor);
     const [schema, setSchema] = useState(builtinSchema);
