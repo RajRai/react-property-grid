@@ -13,8 +13,8 @@ export default function App() {
         fullscreen: true,
         quality: 1,
         tags: ['cinematic'],
-        camera: { fovRange: [45, 90], lodRange: [0, 3] },
-        render: { flags: { ambientOcclusion: true } },
+        camera: { fovRange: [45, 90], lodRange: [0, 3], isoRange: [100, 800] },
+        render: { flags: { ambientOcclusion: true }, opacity: 0.8 },
         resolutionIndex: 2,
     });
     const [globalDisabled, setGlobalDisabled] = useState(false);
@@ -28,8 +28,10 @@ export default function App() {
                 label: 'Name',
                 validate: (v) => (!v ? 'Required' : null),
             },
+
+            // Numeric in data; labeled in UI via render/parse
             resolution: {
-                type: 'single-select',
+                type: 'singleSelect',
                 label: 'Resolution',
                 options: ['720p', '1080p', '4K'],
                 get: (obj) => obj.resolutionIndex,
@@ -37,8 +39,10 @@ export default function App() {
                 renderValue: (stored) => ['720p', '1080p', '4K'][stored] ?? '',
                 parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
             },
+
+            // Classic numeric select (no transforms required)
             quality: {
-                type: 'single-select',
+                type: 'singleSelect',
                 label: 'Quality',
                 options: [
                     { value: 0, label: 'Low' },
@@ -47,36 +51,52 @@ export default function App() {
                 ],
                 validate: (v) => (v == null ? 'Choose a quality' : null),
             },
+
             fullscreen: { type: 'boolean', label: 'Fullscreen' },
         },
+
         children: [
             {
                 section: 'Dimensions',
                 fields: {
-                    width: { type: 'number', label: 'Width', validate: (v) => (v < 320 ? 'Too small' : null) },
-                    height:{ type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+                    width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
+                    height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
                 },
             },
+
             {
                 section: 'Camera',
                 fields: {
+                    // Two inputs with "Min:" / "Max:" labels
                     fovRange: {
-                        type: 'valueRange', // "range" also aliases to valueRange
+                        type: 'range', // "range" also aliases to range
                         label: 'FOV Range (deg)',
                         min: 1, max: 170,
                         get: (obj) => obj.camera.fovRange,
                         set: (obj, v) => { obj.camera.fovRange = v; },
                         validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
                     },
+
+                    // Dual-thumb slider with both values shown
                     lodRange: {
-                        type: 'sliderRange',
+                        type: 'rangeSlider',
                         label: 'LOD Range',
                         min: 0, max: 5, step: 1,
                         get: (obj) => obj.camera.lodRange,
                         set: (obj, v) => { obj.camera.lodRange = v; },
                     },
+
+                    // Using the 'range' alias (same as range)
+                    isoRange: {
+                        type: 'range',
+                        label: 'ISO Range',
+                        min: 50, max: 12800, step: 50,
+                        get: (obj) => obj.camera.isoRange,
+                        set: (obj, v) => { obj.camera.isoRange = v; },
+                    },
                 },
             },
+
             {
                 section: 'Rendering',
                 fields: {
@@ -86,17 +106,26 @@ export default function App() {
                         get: (obj) => obj.render.flags.ambientOcclusion,
                         set: (obj, v) => { obj.render.flags.ambientOcclusion = v; },
                     },
+                    // Single-value slider + number input (synced)
+                    opacity: {
+                        type: 'numberSlider',
+                        label: 'Opacity',
+                        min: 0, max: 1, step: 0.01,
+                        get: (obj) => obj.render.opacity,
+                        set: (obj, v) => { obj.render.opacity = v; },
+                    },
                     tags: {
-                        type: 'multi-select',
+                        type: 'multiSelect',
                         label: 'Tags',
                         options: ['cinematic', 'draft', 'final', 'internal'],
                     },
                 },
             },
+
             {
                 section: 'Experimental',
                 collapsed: true,
-                disabled: true,
+                disabled: true, // whole section disabled
                 fields: {
                     debugFeature: { type: 'boolean', label: 'New Debug Toggle' },
                 },
@@ -116,7 +145,7 @@ export default function App() {
       validate: (v) => (!v ? 'Required' : null),
     },
     resolution: {
-      type: 'single-select',
+      type: 'singleSelect',
       label: 'Resolution',
       options: ['720p', '1080p', '4K'],
       get: (obj) => obj.resolutionIndex,
@@ -125,7 +154,7 @@ export default function App() {
       parseValue: (uiVal) => ['720p', '1080p', '4K'].indexOf(uiVal),
     },
     quality: {
-      type: 'single-select',
+      type: 'singleSelect',
       label: 'Quality',
       options: [
         { value: 0, label: 'Low' },
@@ -140,15 +169,15 @@ export default function App() {
     {
       section: 'Dimensions',
       fields: {
-        width: { type: 'number', label: 'Width', validate: (v) => (v < 320 ? 'Too small' : null) },
-        height:{ type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
+        width:  { type: 'number', label: 'Width',  validate: (v) => (v < 320 ? 'Too small' : null) },
+        height: { type: 'number', label: 'Height', validate: (v) => (v < 200 ? 'Too small' : null) },
       },
     },
     {
       section: 'Camera',
       fields: {
         fovRange: {
-          type: 'valueRange',
+          type: 'range', // "range" also works
           label: 'FOV Range (deg)',
           min: 1, max: 170,
           get: (obj) => obj.camera.fovRange,
@@ -156,11 +185,18 @@ export default function App() {
           validate: ([min, max]) => (min > max ? 'Min must be ≤ Max' : null),
         },
         lodRange: {
-          type: 'sliderRange',
+          type: 'rangeSlider',
           label: 'LOD Range',
           min: 0, max: 5, step: 1,
           get: (obj) => obj.camera.lodRange,
           set: (obj, v) => { obj.camera.lodRange = v; },
+        },
+        isoRange: {
+          type: 'range',
+          label: 'ISO Range',
+          min: 50, max: 12800, step: 50,
+          get: (obj) => obj.camera.isoRange,
+          set: (obj, v) => { obj.camera.isoRange = v; },
         },
       },
     },
@@ -173,8 +209,15 @@ export default function App() {
           get: (obj) => obj.render.flags.ambientOcclusion,
           set: (obj, v) => { obj.render.flags.ambientOcclusion = v; },
         },
+        opacity: {
+          type: 'numberSlider',
+          label: 'Opacity',
+          min: 0, max: 1, step: 0.01,
+          get: (obj) => obj.render.opacity,
+          set: (obj, v) => { obj.render.opacity = v; },
+        },
         tags: {
-          type: 'multi-select',
+          type: 'multiSelect',
           label: 'Tags',
           options: ['cinematic', 'draft', 'final', 'internal'],
         },

@@ -1,4 +1,3 @@
-// PropertyGrid.jsx — Unreal-style grid view with collapsible sections
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -76,9 +75,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
     const toMaybeNumber = (v) => (v === '' ? '' : Number(v));
 
     const control = (() => {
-        // NOTE: 'range' defaults to 'valueRange' (two text boxes)
         let type = field.type;
-        if (type === 'range') type = 'valueRange';
 
         switch (type) {
             case 'boolean':
@@ -126,9 +123,9 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                     />
                 );
 
-            case 'single-select':
-            case 'multi-select': {
-                const multiple = type === 'multi-select';
+            case 'singleSelect':
+            case 'multiSelect': {
+                const multiple = type === 'multiSelect';
                 const opts = toOptionList(field.options || []);
                 const val = value ?? (multiple ? [] : '');
                 return (
@@ -162,8 +159,42 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                 );
             }
 
-            // Two compact inputs: [min, max]
-            case 'valueRange': {
+            // Single-value slider + numeric input (synced)
+            case 'numberSlider': {
+                const minDefault = field.min ?? 0;
+                const maxDefault = field.max ?? 100;
+                const step = field.step ?? 1;
+                const val = typeof value === 'number' ? value : minDefault;
+
+                return (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 0.75 }}>
+                        <Slider
+                            size="small"
+                            min={minDefault}
+                            max={maxDefault}
+                            step={step}
+                            value={val}
+                            onChange={(_, v) => commit(v)}
+                            disabled={disabled}
+                        />
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={val}
+                            onChange={(e) => {
+                                const next = toMaybeNumber(e.target.value);
+                                commit(next === '' ? minDefault : next);
+                            }}
+                            disabled={disabled}
+                            inputProps={{ ...numberInputProps, min: minDefault, max: maxDefault, step }}
+                            sx={{ width: 84 }}
+                        />
+                    </Box>
+                );
+            }
+
+            // Two compact inputs: [min, max] with labels
+            case 'range': {
                 const minDefault = field.min ?? 0;
                 const maxDefault = field.max ?? 100;
                 const pair = Array.isArray(value)
@@ -188,7 +219,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                             value={minVal ?? ''}
                             onChange={(e) => commitAt(0, e.target.value)}
                             disabled={disabled}
-                            inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
+                            inputProps={numberInputProps}
                         />
                         <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', pl: 0.5, pr: 0.5 }}>Max:</Typography>
                         <TextField
@@ -197,7 +228,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                             value={maxVal ?? ''}
                             onChange={(e) => commitAt(1, e.target.value)}
                             disabled={disabled}
-                            inputProps={{ style: { fontSize: '0.8rem', padding: '2px 6px' } }}
+                            inputProps={numberInputProps}
                         />
                         {error && (
                             <FormHelperText error sx={{ gridColumn: '1 / -1', mt: 0 }}>
@@ -208,26 +239,52 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                 );
             }
 
-            // Dual-thumb slider: [min, max]
-            case 'sliderRange': {
+// Dual-thumb slider with static end labels (left/right) + a bit more padding
+            case 'rangeSlider': {
                 const minDefault = field.min ?? 0;
                 const maxDefault = field.max ?? 100;
                 const step = field.step ?? 1;
 
-                const rangeVal = Array.isArray(value) && value.length === 2
-                    ? value
-                    : [minDefault, maxDefault];
+                const rangeVal = Array.isArray(value) && value.length === 2 ? value : [minDefault, maxDefault];
 
                 return (
-                    <Slider
-                        size="small"
-                        min={minDefault}
-                        max={maxDefault}
-                        step={step}
-                        value={rangeVal}
-                        onChange={(_, v) => commit(v)}
-                        disabled={disabled}
-                    />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 0.75 }}>
+                        <Typography
+                            sx={{
+                                fontSize: '0.75rem',
+                                color: 'text.secondary',
+                                minWidth: 40,
+                                textAlign: 'right',
+                                pr: 1,           // 👈 extra right padding
+                            }}
+                        >
+                            {rangeVal[0]}
+                        </Typography>
+
+                        <Slider
+                            size="small"
+                            min={minDefault}
+                            max={maxDefault}
+                            step={step}
+                            value={rangeVal}
+                            onChange={(_, v) => commit(v)}
+                            disabled={disabled}
+                            valueLabelDisplay="off"
+                            getAriaLabel={() => field.label}
+                        />
+
+                        <Typography
+                            sx={{
+                                fontSize: '0.75rem',
+                                color: 'text.secondary',
+                                minWidth: 40,
+                                textAlign: 'left',
+                                pl: 1,           // 👈 extra left padding
+                            }}
+                        >
+                            {rangeVal[1]}
+                        </Typography>
+                    </Box>
                 );
             }
 

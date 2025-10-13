@@ -1,7 +1,7 @@
 {
   "name": "@rajrai/react-property-grid",
   "version": "0.1.0",
-  "description": "Unreal-style, condensed hierarchical property grid for React + MUI",
+  "description": "Condensed hierarchical property grid for React + MUI",
   "author": "Raj Rai <raj.rai.ct@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -33,8 +33,7 @@
     "mui",
     "material-ui",
     "property-grid",
-    "editor",
-    "unreal"
+    "editor"
   ],
   "scripts": {
     "dev": "vite",
