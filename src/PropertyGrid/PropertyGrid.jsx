@@ -101,8 +101,7 @@ function PropertyField({ fieldKey, field, value, object, onChange, disabled }) {
                 );
 
             case 'string':
-                return
-                <TextField
+                return <TextField
                     size="small"
                     fullWidth
                     value={value ?? ''}

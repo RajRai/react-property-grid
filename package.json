@@ -1,32 +1,60 @@
 {
-  "name": "react-property-grid",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@rajrai/react-property-grid",
+  "version": "0.1.0",
+  "description": "Unreal-style, condensed hierarchical property grid for React + MUI",
+  "author": "Raj Rai <raj.rai.ct@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rajrai/react-property-grid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rajrai/react-property-grid"
+  },
+  "homepage": "https://github.com/rajrai/react-property-grid#readme",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.esm.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "react",
+    "mui",
+    "material-ui",
+    "property-grid",
+    "editor",
+    "unreal"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "npm run clean && vite build && npm run copy-meta",
+    "clean": "rimraf dist",
+    "copy-meta": "copyfiles LICENSE README.md package.json dist",
+    "play": "vite --config playground/vite.config.js"
   },
-  "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.4",
-    "@mui/material": "^7.3.4",
-    "prop-types": "^15.8.1",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+  "peerDependencies": {
+    "@emotion/react": "^11.0.0",
+    "@emotion/styled": "^11.0.0",
+    "@mui/icons-material": "^6.0.0",
+    "@mui/material": "^5.15.0 || ^6.0.0",
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.36.0",
-    "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react": "^5.0.4",
-    "eslint": "^9.36.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.22",
-    "globals": "^16.4.0",
-    "vite": "^7.1.7"
+    "@vitejs/plugin-react": "^4.3.1",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^6.0.1",
+    "vite": "^5.4.0"
   }
 }

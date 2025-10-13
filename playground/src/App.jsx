@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { CssBaseline, Container, Paper, ThemeProvider, createTheme, Box, Typography, Stack, Button } from '@mui/material';
-import PropertyGrid from './components/PropertyGrid/PropertyGrid.jsx';
+import PropertyGrid from '@rajrai/react-property-grid';
 
 export default function App() {
     const [data, setData] = useState({
