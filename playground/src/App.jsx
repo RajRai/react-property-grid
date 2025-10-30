@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {
     CssBaseline, Container, Paper, ThemeProvider, Box, Typography,
     Stack, Button, TextField, Alert, FormControl, InputLabel,
     Select, MenuItem, Collapse
 } from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import {
     loadThemes,
     saveCustomTheme,
@@ -24,6 +25,20 @@ import { PropertyGrid } from "@rajrai/react-property-grid";
 import {defaultSceneData, usePlaygroundSchema} from "./schema";
 
 export default function App() {
+    const containerRef = useRef(null);
+    const [isCompact, setIsCompact] = useState(false);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const observer = new ResizeObserver(([entry]) => {
+            setIsCompact(entry.contentRect.width < 900); // adjust threshold as needed
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
     // === THEME MANAGER ===
     const [themesMap, setThemesMap] = useState(() => loadThemes());
     const [selectedTheme, setSelectedTheme] = useState(() => loadLastTheme());
@@ -119,12 +134,23 @@ export default function App() {
     return (
         <ThemeProvider theme={muiTheme}>
             <CssBaseline />
-            <Container maxWidth="xl" sx={{ py: 2 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                    <Typography variant="h5">React Property Grid — Playground</Typography>
-                    <Stack direction="row" spacing={1}>
+            <Container ref={containerRef} maxWidth="xl" sx={{ py: 2, px: isCompact ? 1 : 2 }}>
+                <Stack
+                    direction={isCompact ? "column" : "row"}
+                    justifyContent="space-between"
+                    alignItems={isCompact ? "stretch" : "center"}
+                    spacing={isCompact ? 2 : 1}
+                    sx={{ mb: 1 }}
+                >
+                    <Typography
+                        variant="h5"
+                        sx={{ textAlign: isCompact ? "center" : "left" }}
+                    >
+                        React Property Grid — Playground
+                    </Typography>
+                    <Stack direction={isCompact ? "column" : "row"} spacing={1} sx={{ width: isCompact ? "100%" : "auto" }}>
                         {/* New: Theme selector */}
-                        <FormControl size="small" sx={{ minWidth: 180 }} variant={"outlined"}>
+                        <FormControl size="small" sx={{ minWidth: isCompact ? "100%" : 180 }} variant={"outlined"}>
                             <InputLabel>Theme</InputLabel>
                             <Select
                                 value={selectedTheme}
@@ -142,6 +168,7 @@ export default function App() {
 
                         {/* New: Customize Theme button */}
                         <Button
+                            fullWidth={isCompact}
                             variant="outlined"
                             startIcon={<EditIcon />}
                             onClick={() => setEditorOpen((o) => !o)}
@@ -155,11 +182,11 @@ export default function App() {
                         </Button>
 
                         {/* Existing buttons */}
-                        <Button variant="outlined" onClick={() => setGlobalDisabled((d) => !d)}>
+                        <Button fullWidth={isCompact} variant="outlined" onClick={() => setGlobalDisabled((d) => !d)}>
                             {globalDisabled ? 'Enable Editing' : 'Disable All'}
                         </Button>
-                        <Button variant="outlined" onClick={resetSchema}>Reset Schema</Button>
-                        <Button variant="contained" onClick={applyEditedSchema}>Apply Schema</Button>
+                        <Button fullWidth={isCompact} variant="outlined" onClick={resetSchema}>Reset Schema</Button>
+                        <Button fullWidth={isCompact} variant="contained" onClick={applyEditedSchema}>Apply Schema</Button>
                     </Stack>
                 </Stack>
                 <Collapse in={editorOpen} unmountOnExit>
@@ -183,12 +210,8 @@ export default function App() {
                                 {editorError}
                             </Alert>
                         )}
-                        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                            <Button
-                                startIcon={<PlayArrowIcon />}
-                                variant="contained"
-                                onClick={handleApplyLive}
-                            >
+                        <Stack direction={isCompact ? "column" : "row"} spacing={1} sx={{ mt: 1 }}>
+                            <Button fullWidth={isCompact} startIcon={<PlayArrowIcon />} variant="contained" onClick={handleApplyLive}>
                                 Apply Live
                             </Button>
                             <TextField
@@ -196,36 +219,24 @@ export default function App() {
                                 label="Save as name"
                                 value={saveName}
                                 onChange={(e) => setSaveName(e.target.value)}
-                                sx={{ width: 180 }}
+                                sx={{ width: isCompact ? "100%" : 180 }}
                             />
-                            <Button
-                                startIcon={<SaveIcon />}
-                                variant="outlined"
-                                onClick={handleSaveCustom}
-                            >
+                            <Button fullWidth={isCompact} startIcon={<SaveIcon />} variant="outlined" onClick={handleSaveCustom}>
                                 Save
                             </Button>
-                            <Button
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={handleDeleteSelected}
-                            >
+                            <Button fullWidth={isCompact} color="error" startIcon={<DeleteIcon />} onClick={handleDeleteSelected}>
                                 Delete
                             </Button>
-                            <Button
-                                color="warning"
-                                startIcon={<RestartAltIcon />}
-                                onClick={handleResetCustomAll}
-                            >
+                            <Button fullWidth={isCompact} color="warning" startIcon={<RestartAltIcon />} onClick={handleResetCustomAll}>
                                 Reset Custom
                             </Button>
                         </Stack>
                     </Paper>
                 </Collapse>
 
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <Stack direction={isCompact ? "column" : { xs: 'column', md: 'row' }} spacing={2}>
                     {/* Left: Schema Editor */}
-                    <Paper sx={{ flex: 1, minWidth: 300 }}>
+                    <Paper sx={{ flex: 1, minWidth: isCompact ? "100%" : 300 }}>
                         <Typography variant="subtitle2" gutterBottom>Schema (JS object/array expression)</Typography>
                         <TextField
                             multiline
@@ -249,7 +260,7 @@ export default function App() {
                     </Paper>
 
                     {/* Right: Property Grid + Data */}
-                    <Box sx={{ flex: 1.2, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 360 }}>
+                    <Box sx={{ flex: 1.2, display: 'flex', flexDirection: 'column', gap: 2, minWidth: isCompact ? "100%" : 360 }}>
                         <Paper variant="outlined">
                             <PropertyGrid
                                 schema={schema}
