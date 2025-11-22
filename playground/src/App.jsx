@@ -11,7 +11,7 @@ import {defaultSceneData, usePlaygroundSchema} from "./schema";
 import {
     allPresets,
     NewThemeButton,
-    ThemeEditor,
+    ThemeEditor, ThemeEditorModal,
     ThemeManagerProvider,
     ThemeSelector,
     useThemeManager
@@ -50,6 +50,7 @@ export default function App() {
 
     return (
         <Container ref={containerRef} maxWidth="xl" sx={{ py: 2, px: isCompact ? 1 : 2 }}>
+            <ThemeEditorModal/>
             <Stack
                 direction={isCompact ? "column" : "row"}
                 justifyContent="space-between"
