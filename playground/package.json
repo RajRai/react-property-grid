@@ -9,6 +9,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@rajrai/react-property-grid": "file:../dist/rajrai-react-property-grid-0.1.4.tgz"
+    "@rajrai/react-property-grid": "^0.1.4",
+    "@rajrai/mui-theme-manager": "^1.1.2"
   }
 }
