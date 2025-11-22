@@ -8,7 +8,14 @@ import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { PropertyGrid } from "@rajrai/react-property-grid";
 import {defaultSceneData, usePlaygroundSchema} from "./schema";
-import {allPresets, ThemeEditor, ThemeManagerProvider, ThemeSelector, useThemeManager} from "@rajrai/mui-theme-manager";
+import {
+    allPresets,
+    NewThemeButton,
+    ThemeEditor,
+    ThemeManagerProvider,
+    ThemeSelector,
+    useThemeManager
+} from "@rajrai/mui-theme-manager";
 
 export default function App() {
     const containerRef = useRef(null);
@@ -57,7 +64,14 @@ export default function App() {
                     React Property Grid — Playground
                 </Typography>
                 <Stack direction={isCompact ? "column" : "row"} spacing={1} sx={{ width: isCompact ? "100%" : "auto" }}>
-                    <ThemeSelector/>
+                    <ThemeSelector
+                        formControlProps={{
+                            sx: {
+                                width: isCompact ? "100%" : "auto",
+                            }
+                        }}
+                    />
+                    <NewThemeButton/>
 
                     {/* New: Customize Theme button */}
                     <Button
