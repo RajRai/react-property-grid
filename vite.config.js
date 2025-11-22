@@ -13,6 +13,7 @@ export default defineConfig({
         },
         rollupOptions: {
             external: [
+                'prop-types',
                 'react',
                 'react-dom',
                 '@mui/material',

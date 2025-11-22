@@ -27,14 +27,17 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install deps
-        run: npm ci
+      - name: Install deps (playground)
+        run: |
+          cd playground
+          npm ci
 
       # Build the playground with the correct base path for GitHub Pages
       - name: Build playground
         run: |
-          npx vite build --config playground/vite.config.js --base=/${{ github.event.repository.name }}/
-          cp playground/dist/index.html playground/dist/404.html
+          cd playground
+          npx vite build --base=/${{ github.event.repository.name }}/
+          cp dist/index.html dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

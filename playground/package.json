@@ -5,11 +5,13 @@
   "dependencies": {
     "@mui/icons-material": "^6",
     "@mui/material": "^6",
+    "@rajrai/mui-theme-manager": "^1.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@rajrai/react-property-grid": "^0.1.4",
-    "@rajrai/mui-theme-manager": "^1.1.2"
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^7.2.4"
   }
 }
